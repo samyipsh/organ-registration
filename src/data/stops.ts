@@ -1,4 +1,10 @@
-export const swellInfo = [
+type stopInfo = {
+  stopName: string
+  footagePitch?: string
+  soloVoice?: string
+  id: number
+}
+export const swellInfo: stopInfo[] = [
   { stopName: 'flute', footagePitch: "8'", soloVoice: 'clarinet', id: 1 },
   { stopName: 'flute', footagePitch: "8'", soloVoice: 'cor anglais', id: 2 },
   { stopName: 'flute', footagePitch: "8'", soloVoice: 'orch. fl', id: 3 },
