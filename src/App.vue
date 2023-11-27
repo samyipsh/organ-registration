@@ -1,24 +1,28 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { swellInfo } from './data/stops'
+// import { useRouter } from 'vue-router'
 
-const swellStops = ref(
-  swellInfo.map((stop) => ({ ...stop, isSelected: Math.random() < 0.5 ? false : true }))
-)
+// const swellStops = ref(
+//   swellInfo.map((stop) => ({ ...stop, isSelected: Math.random() < 0.5 ? false : true }))
+// )
+const numOfSwellStops = ref(swellInfo.length)
+const swellStopsSelected = ref(Array.from({ length: numOfSwellStops.value }, () => false))
 
-type Selectable = { isSelected: boolean }
-const toggleSelected = <T extends Selectable>(stop: T) => (stop.isSelected = !stop.isSelected)
+// type Selectable = { isSelected: boolean }
+// const toggleSelected = <T extends Selectable>(stop: T) => (stop.isSelected = !stop.isSelected)
 </script>
 
 <template>
   <div class="division">
+    <h1>Swell ({{ numOfSwellStops }})</h1>
     <div class="card-row">
       <div
         class="card"
-        v-for="stop in swellStops"
+        v-for="(stop, index) in swellInfo"
         :key="stop.id"
-        :class="{ 'card-selected': stop.isSelected }"
-        @click="() => toggleSelected(stop)"
+        :class="{ 'card-selected': swellStopsSelected[index] }"
+        @click="() => (swellStopsSelected[index] = !swellStopsSelected[index])"
       >
         <div class="card-body">
           <h5 class="card-title">{{ stop.stopName }}</h5>
@@ -36,7 +40,9 @@ const toggleSelected = <T extends Selectable>(stop: T) => (stop.isSelected = !st
   width: 100vw;
   background-color: rgba(209, 209, 209, 0.711);
   padding: 2rem 0;
+  color: #111111;
 }
+
 .card-row {
   display: flex;
   flex-direction: row;
