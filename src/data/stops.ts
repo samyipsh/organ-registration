@@ -6,9 +6,9 @@ type stopInfo = {
   soloVoice?: string
 }
 export const swellInfo: stopInfo[] = [
-  { stopName: 'LIEBLICH GEDACKT', footagePitch: "8'", soloVoice: 'clarinet', id: 1 },
-  { stopName: 'GEDACKT', footagePitch: "8'", soloVoice: 'cor anglais', id: 2 },
-  { stopName: 'VIOLA POMPOSA', footagePitch: "8'", soloVoice: 'orch. fl', id: 3 },
+  { stopName: 'LIEBLICH GEDACKT', footagePitch: "8'", soloVoice: 'CLARINET', id: 1 },
+  { stopName: 'GEDACKT', footagePitch: "8'", soloVoice: 'COR ANGLAIS', id: 2 },
+  { stopName: 'VIOLA POMPOSA', footagePitch: "8'", soloVoice: 'ORCH. FL.', id: 3 },
   { stopName: 'VIOLA CELESTE', footagePitch: "8'", id: 4 },
   { stopName: 'OCTAVE GEIGEN', footagePitch: "8'", id: 5 },
   { stopName: 'TRAVERSE FLUTE', footagePitch: "8'", id: 6 },
@@ -41,4 +41,21 @@ export const pedalInfo: stopInfo[] = [
   { stopName: 'GREAT TO PEDAL', id: 11 },
   { stopName: 'SWELL TO PEDAL', id: 12 },
   { stopName: 'MIDI ON PEDAL', id: 13 }
+]
+
+export const greatInfo: stopInfo[] = [
+  { stopName: 'DIAPASON', footagePitch: "32'", soloVoice: 'PRINZIPAL', id: 1 },
+  { stopName: 'HARMONIC FLUTE', footagePitch: "16'", soloVoice: 'MET. GEDACKT', id: 2 },
+  { stopName: 'FLUTE CELESTE II', footagePitch: "16'", id: 3 },
+  { stopName: 'OCTAVE', footagePitch: "16'", soloVoice: 'OCTAV', id: 4 },
+  { stopName: 'SPITZFLÖTE', footagePitch: "8'", id: 5 },
+  { stopName: 'FIFTEENTH', footagePitch: "8'", id: 6 },
+  { stopName: 'MIXTURE', footagePitch: "4'", id: 7 },
+  { stopName: 'TROMBA', footagePitch: 'III', id: 8 },
+  { stopName: 'KRUMHORN', footagePitch: "16'", id: 9 },
+  { stopName: 'TREMULANT', footagePitch: "8'", id: 10 },
+  { stopName: 'CHIMES', id: 11 },
+  { stopName: 'SWELL TO GREAT', id: 12 },
+  { stopName: 'MIDI ON GREAT', id: 13 },
+  { stopName: 'CLASSIC VOICING GT-PD', id: 14 }
 ]

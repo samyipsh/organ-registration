@@ -1,52 +1,65 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { pedalInfo, swellInfo } from './data/stops'
+import { pedalInfo, swellInfo, greatInfo } from './data/stops'
 
 const urlParams = new URLSearchParams(window.location.search)
 console.log('urlParams', urlParams)
 for (const [key, value] of urlParams) {
   console.log(key, value)
 }
+const setURLParam = (key: string, value: string) => {
+  const newURL = new URL(window.location.href)
+  newURL.searchParams.set(key, value)
+  window.history.replaceState({}, '', newURL)
+}
+const getURLParam = (key: string, expectedLen: number) => {
+  const urlState = urlParams.get(key)
+  if (urlState == null) {
+    throw new Error(key + ': URL param is null')
+  }
+  if (urlState.length !== expectedLen) {
+    throw new Error(key + ': URL param is not the correct length of ' + expectedLen)
+  }
+  return urlState
+}
 
 const numOfPedalStops = ref(pedalInfo.length)
-const pedalURLState = urlParams.get('pedal')
-if (pedalURLState == null) {
-  throw new Error('pedal URL param is null')
-}
-if (pedalURLState.length !== numOfPedalStops.value) {
-  throw new Error('pedal URL param is not the correct length')
-}
+const PEDAL_URL_PARAM_KEY = 'pedal'
+const pedalURLState = getURLParam(PEDAL_URL_PARAM_KEY, numOfPedalStops.value)
 const pedalStopsSelected = ref(pedalURLState.split('').map((x) => x === '1'))
 const togglePedalSelected = (index: number) => {
   pedalStopsSelected.value[index] = !pedalStopsSelected.value[index]
   const newURLState = pedalStopsSelected.value.map((x) => (x ? '1' : '0')).join('')
-  const newURL = new URL(window.location.href)
-  newURL.searchParams.set('pedal', newURLState)
-  window.history.replaceState({}, '', newURL)
+  setURLParam(PEDAL_URL_PARAM_KEY, newURLState)
 }
 
 const numOfSwellStops = ref(swellInfo.length)
-const swellURLState = urlParams.get('swell')
-if (swellURLState == null) {
-  throw new Error('swell URL param is null')
-}
-if (swellURLState.length !== numOfSwellStops.value) {
-  throw new Error('swell URL param is not the correct length')
-}
+const SWELL_URL_PARAM_KEY = 'swell'
+const swellURLState = getURLParam(SWELL_URL_PARAM_KEY, numOfSwellStops.value)
 const swellStopsSelected = ref(swellURLState.split('').map((x) => x === '1'))
 const toggleSwellSelected = (index: number) => {
   swellStopsSelected.value[index] = !swellStopsSelected.value[index]
   const newURLState = swellStopsSelected.value.map((x) => (x ? '1' : '0')).join('')
-  const newURL = new URL(window.location.href)
-  newURL.searchParams.set('swell', newURLState)
-  window.history.replaceState({}, '', newURL)
+  setURLParam(SWELL_URL_PARAM_KEY, newURLState)
+}
+
+const numOfGreatStops = ref(greatInfo.length)
+const GREAT_URL_PARAM_KEY = 'great'
+const greatURLState = getURLParam(GREAT_URL_PARAM_KEY, numOfGreatStops.value)
+const greatStopsSelected = ref(greatURLState.split('').map((x) => x === '1'))
+const toggleGreatSelected = (index: number) => {
+  greatStopsSelected.value[index] = !greatStopsSelected.value[index]
+  const newURLState = greatStopsSelected.value.map((x) => (x ? '1' : '0')).join('')
+  setURLParam(GREAT_URL_PARAM_KEY, newURLState)
 }
 </script>
 
 <template>
   <div>
     <div class="division">
-      <h2>pedal ({{ numOfPedalStops }})</h2>
+      <h2>
+        pedal <span>({{ numOfPedalStops }})</span>
+      </h2>
       <div class="card-row">
         <div
           class="card"
@@ -64,7 +77,9 @@ const toggleSwellSelected = (index: number) => {
       </div>
     </div>
     <div class="division">
-      <h2>swell ({{ numOfSwellStops }})</h2>
+      <h2>
+        swell <span>({{ numOfSwellStops }})</span>
+      </h2>
       <div class="card-row">
         <div
           class="card"
@@ -72,6 +87,26 @@ const toggleSwellSelected = (index: number) => {
           :key="stop.id"
           :class="{ 'card-selected': swellStopsSelected[index] }"
           @click="() => toggleSwellSelected(index)"
+        >
+          <div class="card-body">
+            <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
+            <h5 class="card-title">{{ stop.stopName }}</h5>
+            <p class="card-footer">{{ stop?.footagePitch }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="division">
+      <h2>
+        great <span>({{ numOfGreatStops }})</span>
+      </h2>
+      <div class="card-row">
+        <div
+          class="card"
+          v-for="(stop, index) in greatInfo"
+          :key="stop.id"
+          :class="{ 'card-selected': greatStopsSelected[index] }"
+          @click="() => toggleGreatSelected(index)"
         >
           <div class="card-body">
             <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
@@ -91,6 +126,15 @@ const toggleSwellSelected = (index: number) => {
   padding: 2rem 0;
   color: #111111;
   padding: 3rem 0rem 3rem 1rem;
+}
+.division h2 {
+  font-size: 1.5rem;
+  padding: 0 0.5rem;
+}
+
+.division h2 span {
+  font-size: 1rem;
+  font-weight: 400;
 }
 
 .card-row {
@@ -129,7 +173,8 @@ const toggleSwellSelected = (index: number) => {
 .card-top {
   justify-self: flex-start;
   flex-grow: 1;
-  height: 1.5rem;
+  min-height: 1.5rem;
+  font-size: 0.75rem;
 }
 
 .card-footer {
