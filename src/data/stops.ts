@@ -1,3 +1,4 @@
+export type Division = 'great' | 'swell' | 'pedal'
 type stopInfo = {
   stopName: string
   footagePitch?: string

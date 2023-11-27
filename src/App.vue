@@ -1,16 +1,29 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { swellInfo } from './data/stops'
-// import { useRouter } from 'vue-router'
 
-// const swellStops = ref(
-//   swellInfo.map((stop) => ({ ...stop, isSelected: Math.random() < 0.5 ? false : true }))
-// )
 const numOfSwellStops = ref(swellInfo.length)
-const swellStopsSelected = ref(Array.from({ length: numOfSwellStops.value }, () => false))
 
-// type Selectable = { isSelected: boolean }
-// const toggleSelected = <T extends Selectable>(stop: T) => (stop.isSelected = !stop.isSelected)
+const urlParams = new URLSearchParams(window.location.search)
+console.log('urlParams', urlParams)
+for (const [key, value] of urlParams) {
+  console.log(key, value)
+}
+const swellURLState = urlParams.get('swell')
+if (swellURLState == null) {
+  throw new Error('swell URL param is null')
+}
+if (swellURLState.length !== numOfSwellStops.value) {
+  throw new Error('swell URL param is not the correct length')
+}
+const swellStopsSelected = ref(swellURLState.split('').map((x) => x === '1'))
+const toggleSwellSelected = (index: number) => {
+  swellStopsSelected.value[index] = !swellStopsSelected.value[index]
+  const newURLState = swellStopsSelected.value.map((x) => (x ? '1' : '0')).join('')
+  const newURL = new URL(window.location.href)
+  newURL.searchParams.set('swell', newURLState)
+  window.history.replaceState({}, '', newURL)
+}
 </script>
 
 <template>
@@ -22,7 +35,7 @@ const swellStopsSelected = ref(Array.from({ length: numOfSwellStops.value }, () 
         v-for="(stop, index) in swellInfo"
         :key="stop.id"
         :class="{ 'card-selected': swellStopsSelected[index] }"
-        @click="() => (swellStopsSelected[index] = !swellStopsSelected[index])"
+        @click="() => toggleSwellSelected(index)"
       >
         <div class="card-body">
           <h5 class="card-title">{{ stop.stopName }}</h5>
