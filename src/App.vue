@@ -28,7 +28,7 @@ const toggleSwellSelected = (index: number) => {
 
 <template>
   <div class="division">
-    <h1>Swell ({{ numOfSwellStops }})</h1>
+    <h2>swell ({{ numOfSwellStops }})</h2>
     <div class="card-row">
       <div
         class="card"
@@ -54,17 +54,14 @@ const toggleSwellSelected = (index: number) => {
   background-color: rgba(209, 209, 209, 0.711);
   padding: 2rem 0;
   color: #111111;
+  padding: 3rem 0rem 3rem 1rem;
 }
 
 .card-row {
   display: flex;
   flex-direction: row;
   overflow-x: auto;
-  overscroll-behavior-x: contain;
-  width: 100%;
-  justify-content: space-between;
-  padding: 1rem;
-  border: 1px solid #000;
+  padding: 1rem 0;
 }
 .card {
   flex-shrink: 0;
