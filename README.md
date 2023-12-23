@@ -1,6 +1,7 @@
 # organ-registration
 
-This template should help get you started developing with Vue 3 in Vite.
+Example query param: `/?pedal=0011010000000&swell=0000000000001000000&great=01001000000000`
+
 
 ## Recommended IDE Setup
 
