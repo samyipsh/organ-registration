@@ -6,15 +6,15 @@ type stopInfo = {
   soloVoice?: string
 }
 export const swellInfo: stopInfo[] = [
-  { stopName: 'LIEBLICH GEDACKT', footagePitch: "8'", soloVoice: 'CLARINET', id: 1 },
-  { stopName: 'GEDACKT', footagePitch: "8'", soloVoice: 'COR ANGLAIS', id: 2 },
-  { stopName: 'VIOLA POMPOSA', footagePitch: "8'", soloVoice: 'ORCH. FL.', id: 3 },
+  { stopName: 'LIEBLICH GEDACKT', footagePitch: "8'", id: 1 },
+  { stopName: 'GEDACKT', footagePitch: "8'", id: 2 },
+  { stopName: 'VIOLA POMPOSA', footagePitch: "8'", id: 3 },
   { stopName: 'VIOLA CELESTE', footagePitch: "8'", id: 4 },
   { stopName: 'OCTAVE GEIGEN', footagePitch: "8'", id: 5 },
-  { stopName: 'TRAVERSE FLUTE', footagePitch: "8'", id: 6 },
-  { stopName: 'NASARD', footagePitch: "8'", id: 7 },
-  { stopName: 'PICCOLO', footagePitch: "8'", id: 8 },
-  { stopName: 'TIERCE', footagePitch: "8'", id: 9 },
+  { stopName: 'TRAVERSE FLUTE', footagePitch: "8'", soloVoice: 'ORCH. FL.', id: 6 },
+  { stopName: 'NASARD', footagePitch: "8'", soloVoice: 'CLARINET', id: 7 },
+  { stopName: 'PICCOLO', footagePitch: "8'", id: 8, soloVoice: 'FR HORN' },
+  { stopName: 'TIERCE', footagePitch: "8'", soloVoice: 'COR ANGLAIS', id: 9 },
   { stopName: 'FOURNITURE', footagePitch: "4'", id: 10 },
   { stopName: 'WALDHORN', footagePitch: "4'", id: 11 },
   { stopName: 'FRENCH TRUMPET', footagePitch: "4'", id: 12 },
