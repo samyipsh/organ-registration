@@ -38,7 +38,14 @@ npm run dev
 
 ```sh
 npm run build
+
+# preview locally
+serve -s dist
+
+# deploy to gh-pages
+bash deploy.sh
 ```
+
 
 ### Lint with [ESLint](https://eslint.org/)
 
