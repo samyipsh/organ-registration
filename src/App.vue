@@ -1,6 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { pedalInfo, swellInfo, greatInfo } from './data/stops'
+
+// TODO: check if can just use html native select with `multiple` attribute then use v-bind
+// https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_select_multiple
+
+onMounted(() => {
+  console.log('mounted')
+  toastText.value = 'new toast value'
+})
+
+const toastText = ref("i'm a toast")
+const isControlOpen = ref(true)
+const toggleControlOpen = () => (isControlOpen.value = !isControlOpen.value)
 
 const urlParams = new URLSearchParams(window.location.search)
 console.log('urlParams', urlParams)
@@ -52,66 +64,84 @@ const toggleGreatSelected = (index: number) => {
   const newURLState = greatStopsSelected.value.map((x) => (x ? '1' : '0')).join('')
   setURLParam(GREAT_URL_PARAM_KEY, newURLState)
 }
+
+// use a computerRef
+// const instrumentsUsed = computed(() => )
+// change format of displayed stop
+const swellInstrumentsUsed = computed(() => {
+  return swellInfo
+    .filter((stop, i) => swellStopsSelected.value[i])
+    .map((s) => `${s.stopName}-${s.footagePitch}`)
+})
 </script>
 
 <template>
-  <div>
-    <div class="division">
-      <h2>
-        pedal <span>({{ numOfPedalStops }})</span>
-      </h2>
-      <div class="card-row">
-        <div
-          class="card"
-          v-for="(stop, index) in pedalInfo"
-          :key="stop.id"
-          :class="{ 'card-selected': pedalStopsSelected[index] }"
-          @click="() => togglePedalSelected(index)"
-        >
-          <div class="card-body">
-            <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
-            <h5 class="card-title">{{ stop.stopName }}</h5>
-            <p class="card-footer">{{ stop?.footagePitch }}</p>
+  <div class="main">
+    <div class="toast">{{ toastText }}, {{ swellInstrumentsUsed }}</div>
+    <div class="controls">
+      <button @click="() => toggleControlOpen()">toggle</button>
+      <div v-if="isControlOpen">
+        <input type="text" :value="toastText" readonly />
+      </div>
+    </div>
+    <div>
+      <div class="division">
+        <h2>
+          pedal <span>({{ numOfPedalStops }})</span>
+        </h2>
+        <div class="card-row">
+          <div
+            class="card"
+            v-for="(stop, index) in pedalInfo"
+            :key="stop.id"
+            :class="{ 'card-selected': pedalStopsSelected[index] }"
+            @click="() => togglePedalSelected(index)"
+          >
+            <div class="card-body">
+              <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
+              <h5 class="card-title">{{ stop.stopName }}</h5>
+              <p class="card-footer">{{ stop?.footagePitch }}</p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="division">
-      <h2>
-        swell <span>({{ numOfSwellStops }})</span>
-      </h2>
-      <div class="card-row">
-        <div
-          class="card"
-          v-for="(stop, index) in swellInfo"
-          :key="stop.id"
-          :class="{ 'card-selected': swellStopsSelected[index] }"
-          @click="() => toggleSwellSelected(index)"
-        >
-          <div class="card-body">
-            <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
-            <h5 class="card-title">{{ stop.stopName }}</h5>
-            <p class="card-footer">{{ stop?.footagePitch }}</p>
+      <div class="division">
+        <h2>
+          swell <span>({{ numOfSwellStops }})</span>
+        </h2>
+        <div class="card-row">
+          <div
+            class="card"
+            v-for="(stop, index) in swellInfo"
+            :key="stop.id"
+            :class="{ 'card-selected': swellStopsSelected[index] }"
+            @click="() => toggleSwellSelected(index)"
+          >
+            <div class="card-body">
+              <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
+              <h5 class="card-title">{{ stop.stopName }}</h5>
+              <p class="card-footer">{{ stop?.footagePitch }}</p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="division">
-      <h2>
-        great <span>({{ numOfGreatStops }})</span>
-      </h2>
-      <div class="card-row">
-        <div
-          class="card"
-          v-for="(stop, index) in greatInfo"
-          :key="stop.id"
-          :class="{ 'card-selected': greatStopsSelected[index] }"
-          @click="() => toggleGreatSelected(index)"
-        >
-          <div class="card-body">
-            <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
-            <h5 class="card-title">{{ stop.stopName }}</h5>
-            <p class="card-footer">{{ stop?.footagePitch }}</p>
+      <div class="division">
+        <h2>
+          great <span>({{ numOfGreatStops }})</span>
+        </h2>
+        <div class="card-row">
+          <div
+            class="card"
+            v-for="(stop, index) in greatInfo"
+            :key="stop.id"
+            :class="{ 'card-selected': greatStopsSelected[index] }"
+            @click="() => toggleGreatSelected(index)"
+          >
+            <div class="card-body">
+              <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
+              <h5 class="card-title">{{ stop.stopName }}</h5>
+              <p class="card-footer">{{ stop?.footagePitch }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -120,6 +150,16 @@ const toggleGreatSelected = (index: number) => {
 </template>
 
 <style scoped>
+.main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  background-color: #111;
+  color: #fff;
+  padding: 1rem;
+}
+
 .division {
   width: 100vw;
   background-color: rgba(209, 209, 209, 0.711);
