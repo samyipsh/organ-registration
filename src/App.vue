@@ -274,17 +274,25 @@ const loadInputQueryParam = () => {
   width: 50%;
 }
 
-.button-row {
-  display: flex;
-  gap: 10px;
-  padding: 0.5rem 1rem 2rem 0rem;
-}
-
 textarea {
   white-space: pre-wrap;
   height: fit-content;
   width: 50%;
   padding: 2rem 1.5rem;
+}
+
+/* Apply these styles when the viewport is 600px or less */
+@media (max-width: 600px) {
+  .controls input,
+  textarea {
+    width: 100%;
+  }
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+  padding: 0.5rem 1rem 2rem 0rem;
 }
 
 .division {
