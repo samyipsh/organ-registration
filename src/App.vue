@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive, watchEffect, watch } from 'vue'
 import { pedalInfo, swellInfo, greatInfo } from './data/stops'
+import menuSVG from '@/assets/menu-icon.svg'
 
 const numOfPedalStops = ref(pedalInfo.length)
 const numOfSwellStops = ref(swellInfo.length)
@@ -67,7 +68,7 @@ function parseURLQueryParams(urlQueryStr: string) {
 }
 
 const toastText = ref(
-  'Hi!, use this page to\n(1) easily generate copyable registration text for your organ [for e-storage perhaps]\n(2) easily visualize and share organ stops'
+  'Hi! use this page to\n(1) easily generate copyable registration text for your organ [for e-storage perhaps]\n(2) easily visualize and share organ stops'
 )
 const isControlOpen = ref(true)
 const toggleControlOpen = () => (isControlOpen.value = !isControlOpen.value)
@@ -155,7 +156,9 @@ const loadInputQueryParam = () => {
     <div class="toast">{{ toastText }}</div>
     <!--  -->
     <div>
-      <button @click="() => toggleControlOpen()">toggle</button>
+      <button class="menuButton" @click="() => toggleControlOpen()">
+        <img :src="menuSVG" alt="Menu Icon" style="width: 2rem; height: 2rem" />
+      </button>
       <div class="controls" v-if="isControlOpen">
         <input type="text" v-model="inputText" />
         <div class="button-row">
@@ -236,22 +239,35 @@ const loadInputQueryParam = () => {
 <style scoped>
 .toast {
   white-space: pre-wrap;
+  padding: 1rem 1rem;
+  border: 1px solid #000;
+  background: rgb(30, 30, 30);
+  margin-bottom: 1rem;
+  inset: 1rem;
 }
 
 .main {
   display: flex;
   flex-direction: column;
-  height: 100vh;
   width: 100vw;
-  background-color: #111;
-  color: #fff;
+  background-color: rgb(42, 42, 42);
+  color: #fcfbfb;
   padding: 1rem;
 }
 
+.menuButton {
+  border-radius: 3px;
+  border: none;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
 .controls {
   background-color: #fff;
+  border-radius: 1rem;
   color: #111;
-  padding: 1rem;
+  padding: 3rem 2rem;
+  margin-bottom: 1rem;
 }
 
 .controls input {
@@ -261,17 +277,21 @@ const loadInputQueryParam = () => {
 .button-row {
   display: flex;
   gap: 10px;
+  padding: 0.5rem 1rem 2rem 0rem;
 }
 
 textarea {
   white-space: pre-wrap;
   height: fit-content;
   width: 50%;
+  padding: 2rem 1.5rem;
 }
 
 .division {
   width: 100vw;
-  background-color: rgba(209, 209, 209, 0.711);
+  background-color: #e9e8e8;
+  border-radius: 1rem;
+  margin-bottom: 1rem;
   padding: 2rem 0;
   color: #111111;
   padding: 3rem 0rem 3rem 1rem;
