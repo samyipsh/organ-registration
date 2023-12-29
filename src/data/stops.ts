@@ -1,3 +1,5 @@
+// maybe wrap the info in a class to group together access and modification methods with data?
+
 export type Division = 'great' | 'swell' | 'pedal'
 type stopInfo = {
   stopName: string
