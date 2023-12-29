@@ -282,7 +282,7 @@ textarea {
 }
 
 /* Apply these styles when the viewport is 600px or less */
-@media (max-width: 600px) {
+@media (max-width: 900px) {
   .controls input,
   textarea {
     width: 100%;
