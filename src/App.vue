@@ -1,89 +1,173 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, reactive, watchEffect, watch } from 'vue'
 import { pedalInfo, swellInfo, greatInfo } from './data/stops'
 
+const numOfPedalStops = ref(pedalInfo.length)
+const numOfSwellStops = ref(swellInfo.length)
+const numOfGreatStops = ref(greatInfo.length)
+const PEDAL_URL_PARAM_KEY = 'pedal'
+const SWELL_URL_PARAM_KEY = 'swell'
+const GREAT_URL_PARAM_KEY = 'great'
 // TODO: check if can just use html native select with `multiple` attribute then use v-bind
 // https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_select_multiple
 
-onMounted(() => {
-  console.log('mounted')
-  toastText.value = 'new toast value'
+// TODO: properly Type the params type
+const DEFAULT_PEDAL_STATE = '0'.repeat(numOfPedalStops.value)
+const DEFAULT_SWELL_STATE = '0'.repeat(numOfSwellStops.value)
+const DEFAULT_GREAT_STATE = '0'.repeat(numOfGreatStops.value)
+
+const url = reactive({
+  base: window.location.origin + window.location.pathname,
+  params: new Map([
+    [PEDAL_URL_PARAM_KEY, DEFAULT_PEDAL_STATE],
+    [SWELL_URL_PARAM_KEY, DEFAULT_SWELL_STATE],
+    [GREAT_URL_PARAM_KEY, DEFAULT_GREAT_STATE]
+  ])
 })
 
-const toastText = ref("i'm a toast")
+const urlCurrent = computed(() => {
+  const newURL =
+    `${url.base}?` +
+    Array.from(url.params)
+      .map(([k, v]) => `${k}=${v}`)
+      .join('&')
+  return newURL
+})
+watchEffect(() => {
+  window.history.replaceState({}, '', urlCurrent.value)
+})
+const copyURL = () => window.navigator.clipboard.writeText(urlCurrent.value)
+// computed not used as inputText should be updatable by user
+// as an alternative way to load a URL (for mobile users)
+// watch function used so that it is updated on urlCurrent change
+const inputText = ref(urlCurrent.value)
+watch(urlCurrent, (newURL) => (inputText.value = newURL))
+
+parseURLQueryParams(window.location.search)
+function parseURLQueryParams(urlQueryStr: string) {
+  const binaryRegex = (n: number) => new RegExp(`^[01]{${n}}$`)
+  const isBinaryOfCorrectLen = (s: string, len: number) => {
+    return binaryRegex(len).test(s)
+  }
+
+  const urlParams = new URLSearchParams(urlQueryStr)
+  const urlPedalState = urlParams.get(PEDAL_URL_PARAM_KEY)
+  const urlSwellState = urlParams.get(SWELL_URL_PARAM_KEY)
+  const urlGreatState = urlParams.get(GREAT_URL_PARAM_KEY)
+
+  if (urlPedalState && isBinaryOfCorrectLen(urlPedalState, numOfPedalStops.value)) {
+    url.params.set('pedal', urlPedalState)
+  }
+  if (urlSwellState && isBinaryOfCorrectLen(urlSwellState, numOfSwellStops.value)) {
+    url.params.set('swell', urlSwellState)
+  }
+  if (urlGreatState && isBinaryOfCorrectLen(urlGreatState, numOfGreatStops.value)) {
+    url.params.set('great', urlGreatState)
+  }
+}
+
+const toastText = ref(
+  'Hi!, use this page to\n(1) easily generate copyable registration text for your organ [for e-storage perhaps]\n(2) easily visualize and share organ stops'
+)
 const isControlOpen = ref(true)
 const toggleControlOpen = () => (isControlOpen.value = !isControlOpen.value)
 
-const urlParams = new URLSearchParams(window.location.search)
-console.log('urlParams', urlParams)
-for (const [key, value] of urlParams) {
-  console.log(key, value)
-}
-const setURLParam = (key: string, value: string) => {
-  const newURL = new URL(window.location.href)
-  newURL.searchParams.set(key, value)
-  window.history.replaceState({}, '', newURL)
-}
-const getURLParam = (key: string, expectedLen: number) => {
-  const urlState = urlParams.get(key)
-  if (urlState == null) {
-    throw new Error(key + ': URL param is null')
-  }
-  if (urlState.length !== expectedLen) {
-    throw new Error(key + ': URL param is not the correct length of ' + expectedLen)
-  }
-  return urlState
+const flipBit = (s: string, index: number) => {
+  return s.slice(0, index) + (s[index] === '1' ? '0' : '1') + s.slice(index + 1)
 }
 
-const numOfPedalStops = ref(pedalInfo.length)
-const PEDAL_URL_PARAM_KEY = 'pedal'
-const pedalURLState = getURLParam(PEDAL_URL_PARAM_KEY, numOfPedalStops.value)
-const pedalStopsSelected = ref(pedalURLState.split('').map((x) => x === '1'))
 const togglePedalSelected = (index: number) => {
-  pedalStopsSelected.value[index] = !pedalStopsSelected.value[index]
-  const newURLState = pedalStopsSelected.value.map((x) => (x ? '1' : '0')).join('')
-  setURLParam(PEDAL_URL_PARAM_KEY, newURLState)
+  const urlState = url.params.get(PEDAL_URL_PARAM_KEY)!
+  const newURLState = flipBit(urlState, index)
+  url.params.set(PEDAL_URL_PARAM_KEY, newURLState)
 }
 
-const numOfSwellStops = ref(swellInfo.length)
-const SWELL_URL_PARAM_KEY = 'swell'
-const swellURLState = getURLParam(SWELL_URL_PARAM_KEY, numOfSwellStops.value)
-const swellStopsSelected = ref(swellURLState.split('').map((x) => x === '1'))
 const toggleSwellSelected = (index: number) => {
-  swellStopsSelected.value[index] = !swellStopsSelected.value[index]
-  const newURLState = swellStopsSelected.value.map((x) => (x ? '1' : '0')).join('')
-  setURLParam(SWELL_URL_PARAM_KEY, newURLState)
+  const urlState = url.params.get(SWELL_URL_PARAM_KEY)!
+  const newURLState = flipBit(urlState, index)
+  url.params.set(SWELL_URL_PARAM_KEY, newURLState)
 }
 
-const numOfGreatStops = ref(greatInfo.length)
-const GREAT_URL_PARAM_KEY = 'great'
-const greatURLState = getURLParam(GREAT_URL_PARAM_KEY, numOfGreatStops.value)
-const greatStopsSelected = ref(greatURLState.split('').map((x) => x === '1'))
 const toggleGreatSelected = (index: number) => {
-  greatStopsSelected.value[index] = !greatStopsSelected.value[index]
-  const newURLState = greatStopsSelected.value.map((x) => (x ? '1' : '0')).join('')
-  setURLParam(GREAT_URL_PARAM_KEY, newURLState)
+  const urlState = url.params.get(GREAT_URL_PARAM_KEY)!
+  const newURLState = flipBit(urlState, index)
+  url.params.set(GREAT_URL_PARAM_KEY, newURLState)
+}
+const pedalInstrumentsUsed = computed(() => {
+  const instumentsUsed = pedalInfo
+    .filter((stop, i) => url.params.get(PEDAL_URL_PARAM_KEY)![i] === '1')
+    .map((s) => `${s.stopName}${s.footagePitch ? `-${s.footagePitch.slice(0, -1)}` : ''}`)
+    .join(', ')
+  return `pedal: (${instumentsUsed})`
+})
+
+const swellInstrumentsUsed = computed(() => {
+  const isSoloOrganToggled = url.params.get(SWELL_URL_PARAM_KEY)![18] === '1'
+  const instumentsUsed = swellInfo
+    .filter((stop, i) => url.params.get(SWELL_URL_PARAM_KEY)![i] === '1')
+    .map(
+      (s) =>
+        `${isSoloOrganToggled && s.soloVoice ? s.soloVoice : s.stopName}${
+          s.footagePitch ? `-${s.footagePitch.slice(0, -1)}` : ''
+        }`
+    )
+    .join(', ')
+  return `swell: (${instumentsUsed})`
+})
+
+const greatInstrumentsUsed = computed(() => {
+  const isAlternateInstrumentToggled = url.params.get(GREAT_URL_PARAM_KEY)![13] === '1'
+  const instumentsUsed = greatInfo
+    .filter((stop, i) => url.params.get(GREAT_URL_PARAM_KEY)![i] === '1')
+    .map(
+      (s) =>
+        `${isAlternateInstrumentToggled && s.soloVoice ? s.soloVoice : s.stopName}${
+          s.footagePitch ? `-${s.footagePitch.slice(0, -1)}` : ''
+        }`
+    )
+    .join(', ')
+  return `great: (${instumentsUsed})`
+})
+
+const instrumentsUsed = computed(() => {
+  return `${pedalInstrumentsUsed.value}\n${swellInstrumentsUsed.value}\n${greatInstrumentsUsed.value}`
+})
+
+const resetStops = () => {
+  url.params.set(PEDAL_URL_PARAM_KEY, DEFAULT_PEDAL_STATE)
+  url.params.set(SWELL_URL_PARAM_KEY, DEFAULT_SWELL_STATE)
+  url.params.set(GREAT_URL_PARAM_KEY, DEFAULT_GREAT_STATE)
+}
+const copyRegistration = () => {
+  window.navigator.clipboard.writeText(instrumentsUsed.value)
 }
 
-// use a computerRef
-// const instrumentsUsed = computed(() => )
-// change format of displayed stop
-const swellInstrumentsUsed = computed(() => {
-  return swellInfo
-    .filter((stop, i) => swellStopsSelected.value[i])
-    .map((s) => `${s.stopName}-${s.footagePitch}`)
-})
+// TODO: fix so that when wrong input is parsed it explains which param is wrong
+const loadInputQueryParam = () => {
+  const inputQueryParam = inputText.value.split('?')[1]
+  parseURLQueryParams(inputQueryParam)
+}
 </script>
 
 <template>
   <div class="main">
-    <div class="toast">{{ toastText }}, {{ swellInstrumentsUsed }}</div>
-    <div class="controls">
+    <!--  -->
+    <div class="toast">{{ toastText }}</div>
+    <!--  -->
+    <div>
       <button @click="() => toggleControlOpen()">toggle</button>
-      <div v-if="isControlOpen">
-        <input type="text" :value="toastText" readonly />
+      <div class="controls" v-if="isControlOpen">
+        <input type="text" v-model="inputText" />
+        <div class="button-row">
+          <button @click="loadInputQueryParam">Load</button>
+          <button @click="resetStops">Reset</button>
+          <button @click="copyURL">Copy URL</button>
+          <button @click="copyRegistration">Copy Registration</button>
+        </div>
+        <textarea :value="instrumentsUsed" readonly rows="3"></textarea>
       </div>
     </div>
+    <!--  -->
     <div>
       <div class="division">
         <h2>
@@ -94,7 +178,7 @@ const swellInstrumentsUsed = computed(() => {
             class="card"
             v-for="(stop, index) in pedalInfo"
             :key="stop.id"
-            :class="{ 'card-selected': pedalStopsSelected[index] }"
+            :class="{ 'card-selected': url.params.get(PEDAL_URL_PARAM_KEY)?.[index] === '1' }"
             @click="() => togglePedalSelected(index)"
           >
             <div class="card-body">
@@ -114,7 +198,7 @@ const swellInstrumentsUsed = computed(() => {
             class="card"
             v-for="(stop, index) in swellInfo"
             :key="stop.id"
-            :class="{ 'card-selected': swellStopsSelected[index] }"
+            :class="{ 'card-selected': url.params.get(SWELL_URL_PARAM_KEY)?.[index] === '1' }"
             @click="() => toggleSwellSelected(index)"
           >
             <div class="card-body">
@@ -134,7 +218,7 @@ const swellInstrumentsUsed = computed(() => {
             class="card"
             v-for="(stop, index) in greatInfo"
             :key="stop.id"
-            :class="{ 'card-selected': greatStopsSelected[index] }"
+            :class="{ 'card-selected': url.params.get(GREAT_URL_PARAM_KEY)?.[index] === '1' }"
             @click="() => toggleGreatSelected(index)"
           >
             <div class="card-body">
@@ -150,6 +234,10 @@ const swellInstrumentsUsed = computed(() => {
 </template>
 
 <style scoped>
+.toast {
+  white-space: pre-wrap;
+}
+
 .main {
   display: flex;
   flex-direction: column;
@@ -158,6 +246,27 @@ const swellInstrumentsUsed = computed(() => {
   background-color: #111;
   color: #fff;
   padding: 1rem;
+}
+
+.controls {
+  background-color: #fff;
+  color: #111;
+  padding: 1rem;
+}
+
+.controls input {
+  width: 50%;
+}
+
+.button-row {
+  display: flex;
+  gap: 10px;
+}
+
+textarea {
+  white-space: pre-wrap;
+  height: fit-content;
+  width: 50%;
 }
 
 .division {
