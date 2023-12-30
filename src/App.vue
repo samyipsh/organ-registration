@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, reactive, watchEffect, watch } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import { pedalInfo, swellInfo, greatInfo } from './data/stops'
 import menuSVG from '@/assets/menu-icon.svg'
 
@@ -34,7 +34,7 @@ const urlCurrent = computed(() => {
       .join('&')
   return newURL
 })
-watchEffect(() => {
+watch(urlCurrent, () => {
   window.history.replaceState({}, '', urlCurrent.value)
 })
 const copyURL = () => window.navigator.clipboard.writeText(urlCurrent.value)
