@@ -23,7 +23,7 @@ export const swellInfo: stopInfo[] = [
   { stopName: 'OBOE', footagePitch: "4'", id: 13 },
   { stopName: 'TREMULANT', id: 14 },
   { stopName: 'CELESTA', id: 15 },
-  { stopName: 'HARPSICHORD', id: 16 },
+  { stopName: 'HARPSICH.', id: 16 },
   { stopName: 'SWELL UNISON OFF', id: 17 },
   { stopName: 'MIDI ON SWELL', id: 18 },
   { stopName: 'SOLO ORGAN VOICES', id: 19 }
