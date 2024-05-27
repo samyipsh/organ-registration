@@ -11,37 +11,62 @@ const numOfSwellStops = swellInfo.length
 const numOfGreatStops = greatInfo.length
 console.log("numOfStops (pedal, swell, great): ", numOfPedalStops, numOfSwellStops, numOfGreatStops)
 
-
-const PEDAL_URL_PARAM_KEY = 'pedal'
-const SWELL_URL_PARAM_KEY = 'swell'
-const GREAT_URL_PARAM_KEY = 'great'
+// const PEDAL_URL_PARAM_KEY = 'pedal'
+// const SWELL_URL_PARAM_KEY = 'swell'
+// const GREAT_URL_PARAM_KEY = 'great'
+const OPTIONS_URL_PARAM_KEY = "options"
+const REGISTRATIONS_URL_PARAM_KEY = "registrations"
 // TODO: check if can just use html native select with `multiple` attribute then use v-bind
 // https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_select_multiple
 
-// TODO: properly Type the params type
 const DEFAULT_PEDAL_STATE = '0'.repeat(numOfPedalStops)
 const DEFAULT_SWELL_STATE = '0'.repeat(numOfSwellStops)
 const DEFAULT_GREAT_STATE = '0'.repeat(numOfGreatStops)
-const DEFAULT_STOPS_STATE_BASE64 = Base64Conversion.encode(DEFAULT_PEDAL_STATE + DEFAULT_SWELL_STATE + DEFAULT_GREAT_STATE)
+const DEFAULT_STOPS_STATE_BASE2 = DEFAULT_PEDAL_STATE + DEFAULT_SWELL_STATE + DEFAULT_GREAT_STATE
+const DEFAULT_STOPS_STATE_BASE64 = Base64Conversion.encode(DEFAULT_STOPS_STATE_BASE2)
 console.log(DEFAULT_STOPS_STATE_BASE64, DEFAULT_STOPS_STATE_BASE64.length)
 
+const URL_BASE = window.location.origin + window.location.pathname
 
+type RegistrationState = {
+  // TODO: add remarks
+  // decimal of binary string (3 options: name, diff, all) 
+  // 0 is default (logical defaults will apply)
+  name: string;
+  view_option: 0 | 1 | 2 | 3 | 4 | 5 | 6; 
+  stops: string; // binary string (pedal, swell, great stops concatenated) without padding
+  remarks: string;
+}
 
-const url = reactive({
-  base: window.location.origin + window.location.pathname,
-  params: new Map([
-    [PEDAL_URL_PARAM_KEY, DEFAULT_PEDAL_STATE],
-    [SWELL_URL_PARAM_KEY, DEFAULT_SWELL_STATE],
-    [GREAT_URL_PARAM_KEY, DEFAULT_GREAT_STATE]
-  ])
+const curRegistration: number = 0
+
+// TODO: rename url to 'globalState'
+type UrlState = {
+  options: Map<string, boolean>;
+  registrations: Array<RegistrationState>;
+  // params: Map<string, string>;
+}
+const url: UrlState = reactive({
+  options: new Map<string, boolean>([
+    ["visualize_next", true]
+  ]),
+  registrations: [{ name: "", view_option: 0, stops: DEFAULT_STOPS_STATE_BASE2, remarks: "" }], // array of stop objects
 })
 
+
+const registrationStr = (registration: RegistrationState): string => {
+  return `${registration.name}:${registration.view_option}:${registration.stops}:${registration.remarks}`
+}
 const urlCurrent = computed(() => {
   const newURL =
-    `${url.base}?` +
-    Array.from(url.params)
-      .map(([k, v]) => `${k}=${v}`)
-      .join('&')
+    `${URL_BASE}?` +
+    `options=` + Array(url.options.values())
+      .map((v) => v ? '1' : '0')
+      .join('') +
+    `&` +
+    `registrations=` + url.registrations
+      .map(registrationStr)
+      .join('~')
   return newURL
 })
 watch(urlCurrent, () => {
@@ -56,25 +81,35 @@ watch(urlCurrent, (newURL) => (inputText.value = newURL))
 
 parseURLQueryParams(window.location.search)
 function parseURLQueryParams(urlQueryStr: string) {
+  if (urlQueryStr === "" || urlQueryStr === "?") return
+  // console.log("urlQueryStr: ", urlQueryStr)
+  // ?options=...&registrations= r1 ~ r2 ~ r3 ...
   const binaryRegex = (n: number) => new RegExp(`^[01]{${n}}$`)
   const isBinaryOfCorrectLen = (s: string, len: number) => {
     return binaryRegex(len).test(s)
   }
 
   const urlParams = new URLSearchParams(urlQueryStr)
-  const urlPedalState = urlParams.get(PEDAL_URL_PARAM_KEY)
-  const urlSwellState = urlParams.get(SWELL_URL_PARAM_KEY)
-  const urlGreatState = urlParams.get(GREAT_URL_PARAM_KEY)
+  // const optionsParams = urlParams.get(OPTIONS_URL_PARAM_KEY)
+  const r = urlParams.get(REGISTRATIONS_URL_PARAM_KEY)
+  console.log(r)
+  const urlRegistrations = r?.split("~")
+  console.log(urlRegistrations)
 
-  if (urlPedalState && isBinaryOfCorrectLen(urlPedalState, numOfPedalStops)) {
-    url.params.set('pedal', urlPedalState)
+  // if (url.registrations[0]) url.registrations[0] =  
+  const newRegistrationsState: Array<RegistrationState> = []
+  for (const registration of urlRegistrations ?? []) {
+    const [name, view_option, stops, remarks] = registration.split(":")
+    console.log("name", name, "view_option", view_option, "stops", stops, "remarks", remarks)
+    const newRegistration: RegistrationState = {
+      name,
+      view_option: parseInt(view_option) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+      stops,
+      remarks
+    }
+    newRegistrationsState.push(newRegistration)
   }
-  if (urlSwellState && isBinaryOfCorrectLen(urlSwellState, numOfSwellStops)) {
-    url.params.set('swell', urlSwellState)
-  }
-  if (urlGreatState && isBinaryOfCorrectLen(urlGreatState, numOfGreatStops)) {
-    url.params.set('great', urlGreatState)
-  }
+  url.registrations = newRegistrationsState
 }
 
 const toastText = ref(
@@ -87,35 +122,31 @@ const flipBit = (s: string, index: number) => {
   return s.slice(0, index) + (s[index] === '1' ? '0' : '1') + s.slice(index + 1)
 }
 
-const togglePedalSelected = (index: number) => {
-  const urlState = url.params.get(PEDAL_URL_PARAM_KEY)!
-  const newURLState = flipBit(urlState, index)
-  url.params.set(PEDAL_URL_PARAM_KEY, newURLState)
+const offset = (division: "pedal" | "swell" | "great") => {
+  return division === "pedal" ? 0 
+      : division === "swell" ? numOfPedalStops 
+          : numOfPedalStops + numOfSwellStops
+}
+const toggleDivision = (index: number, division: "pedal" | "swell" | "great") => {
+  console.assert(url.registrations.length > curRegistration, "registration not found")
+  const urlState = url.registrations[curRegistration].stops
+  const newURLState = flipBit(urlState, offset(division) + index)
+  url.registrations[curRegistration].stops = newURLState
 }
 
-const toggleSwellSelected = (index: number) => {
-  const urlState = url.params.get(SWELL_URL_PARAM_KEY)!
-  const newURLState = flipBit(urlState, index)
-  url.params.set(SWELL_URL_PARAM_KEY, newURLState)
-}
-
-const toggleGreatSelected = (index: number) => {
-  const urlState = url.params.get(GREAT_URL_PARAM_KEY)!
-  const newURLState = flipBit(urlState, index)
-  url.params.set(GREAT_URL_PARAM_KEY, newURLState)
-}
 const pedalInstrumentsUsed = computed(() => {
   const instumentsUsed = pedalInfo
-    .filter((stop, i) => url.params.get(PEDAL_URL_PARAM_KEY)![i] === '1')
+    .filter((_, i) => url.registrations[curRegistration].stops[offset("pedal") + i] === '1')
     .map((s) => `${s.stopName}${s.footagePitch ? `-${s.footagePitch.slice(0, -1)}` : ''}`)
     .join(', ')
   return `pedal: (${instumentsUsed})`
 })
 
 const swellInstrumentsUsed = computed(() => {
-  const isSoloOrganToggled = url.params.get(SWELL_URL_PARAM_KEY)![18] === '1'
+  const ALTERNATE_INSTR_IDX = 18
+  const isSoloOrganToggled = url.registrations[curRegistration].stops[offset("swell") + ALTERNATE_INSTR_IDX] === '1'
   const instumentsUsed = swellInfo
-    .filter((stop, i) => url.params.get(SWELL_URL_PARAM_KEY)![i] === '1')
+    .filter((_, i) => url.registrations[curRegistration].stops[offset("swell") + i] === '1')
     .map(
       (s) =>
         `${isSoloOrganToggled && s.soloVoice ? s.soloVoice : s.stopName}${
@@ -127,9 +158,10 @@ const swellInstrumentsUsed = computed(() => {
 })
 
 const greatInstrumentsUsed = computed(() => {
-  const isAlternateInstrumentToggled = url.params.get(GREAT_URL_PARAM_KEY)![13] === '1'
+  const ALTERNATE_INSTR_IDX = 13
+  const isAlternateInstrumentToggled = url.registrations[curRegistration].stops[offset("great") + ALTERNATE_INSTR_IDX] === '1'
   const instumentsUsed = greatInfo
-    .filter((stop, i) => url.params.get(GREAT_URL_PARAM_KEY)![i] === '1')
+    .filter((_, i) => url.registrations[curRegistration].stops[offset("great") + i] === '1')
     .map(
       (s) =>
         `${isAlternateInstrumentToggled && s.soloVoice ? s.soloVoice : s.stopName}${
@@ -145,9 +177,7 @@ const instrumentsUsed = computed(() => {
 })
 
 const resetStops = () => {
-  url.params.set(PEDAL_URL_PARAM_KEY, DEFAULT_PEDAL_STATE)
-  url.params.set(SWELL_URL_PARAM_KEY, DEFAULT_SWELL_STATE)
-  url.params.set(GREAT_URL_PARAM_KEY, DEFAULT_GREAT_STATE)
+  url.registrations[curRegistration].stops = DEFAULT_STOPS_STATE_BASE2
 }
 const copyRegistration = () => {
   window.navigator.clipboard.writeText(instrumentsUsed.value)
@@ -191,8 +221,8 @@ const loadInputQueryParam = () => {
             class="card"
             v-for="(stop, index) in pedalInfo"
             :key="stop.id"
-            :class="{ 'card-selected': url.params.get(PEDAL_URL_PARAM_KEY)?.[index] === '1' }"
-            @click="() => togglePedalSelected(index)"
+            :class="{ 'card-selected': url.registrations[curRegistration].stops[offset('pedal') + index] === '1' }"
+            @click="() => toggleDivision(index, 'pedal')"
           >
             <div class="card-body">
               <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
@@ -211,8 +241,8 @@ const loadInputQueryParam = () => {
             class="card"
             v-for="(stop, index) in swellInfo"
             :key="stop.id"
-            :class="{ 'card-selected': url.params.get(SWELL_URL_PARAM_KEY)?.[index] === '1' }"
-            @click="() => toggleSwellSelected(index)"
+            :class="{ 'card-selected': url.registrations[curRegistration].stops[offset('swell') + index] === '1' }"
+            @click="() => toggleDivision(index, 'swell')"
           >
             <div class="card-body">
               <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
@@ -231,8 +261,8 @@ const loadInputQueryParam = () => {
             class="card"
             v-for="(stop, index) in greatInfo"
             :key="stop.id"
-            :class="{ 'card-selected': url.params.get(GREAT_URL_PARAM_KEY)?.[index] === '1' }"
-            @click="() => toggleGreatSelected(index)"
+            :class="{ 'card-selected': url.registrations[curRegistration].stops[offset('great') + index] === '1' }"
+            @click="() => toggleDivision(index, 'great')"
           >
             <div class="card-body">
               <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>

@@ -26,8 +26,8 @@ const Base64CharConversion = (function() {
     };
 })();
 
+// reference: https://stackoverflow.com/questions/6213227/fastest-way-to-convert-a-number-to-radix-64-in-javascript
 // for a fixed len of binary string so num of padding bits stored
-
 export const Base64Conversion = class {
     static numPaddingBits = 0;
     static BASE_64_BITS: number = 6;
