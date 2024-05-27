@@ -296,7 +296,6 @@ textarea {
 }
 
 .division {
-  width: 100vw;
   background-color: #e9e8e8;
   border-radius: 1rem;
   margin-bottom: 1rem;
@@ -345,6 +344,7 @@ textarea {
   font-weight: 700;
   padding: 0 0.5rem;
   width: 100%;
+  text-overflow: ellipsis; 
 }
 
 .card-top {
