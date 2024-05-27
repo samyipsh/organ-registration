@@ -2,10 +2,16 @@
 import { ref, computed, reactive, watch } from 'vue'
 import { pedalInfo, swellInfo, greatInfo } from './data/stops'
 import menuSVG from '@/assets/menu-icon.svg'
+import { Base64Conversion } from './utils/binaryConversion'
 
-const numOfPedalStops = ref(pedalInfo.length)
-const numOfSwellStops = ref(swellInfo.length)
-const numOfGreatStops = ref(greatInfo.length)
+// TODO: remove ref; not required since this is constant and will not change from start to end of app
+// ie reactivity is not required
+const numOfPedalStops = pedalInfo.length
+const numOfSwellStops = swellInfo.length
+const numOfGreatStops = greatInfo.length
+console.log("numOfStops (pedal, swell, great): ", numOfPedalStops, numOfSwellStops, numOfGreatStops)
+
+
 const PEDAL_URL_PARAM_KEY = 'pedal'
 const SWELL_URL_PARAM_KEY = 'swell'
 const GREAT_URL_PARAM_KEY = 'great'
@@ -13,9 +19,13 @@ const GREAT_URL_PARAM_KEY = 'great'
 // https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_select_multiple
 
 // TODO: properly Type the params type
-const DEFAULT_PEDAL_STATE = '0'.repeat(numOfPedalStops.value)
-const DEFAULT_SWELL_STATE = '0'.repeat(numOfSwellStops.value)
-const DEFAULT_GREAT_STATE = '0'.repeat(numOfGreatStops.value)
+const DEFAULT_PEDAL_STATE = '0'.repeat(numOfPedalStops)
+const DEFAULT_SWELL_STATE = '0'.repeat(numOfSwellStops)
+const DEFAULT_GREAT_STATE = '0'.repeat(numOfGreatStops)
+const DEFAULT_STOPS_STATE_BASE64 = Base64Conversion.encode(DEFAULT_PEDAL_STATE + DEFAULT_SWELL_STATE + DEFAULT_GREAT_STATE)
+console.log(DEFAULT_STOPS_STATE_BASE64, DEFAULT_STOPS_STATE_BASE64.length)
+
+
 
 const url = reactive({
   base: window.location.origin + window.location.pathname,
@@ -56,13 +66,13 @@ function parseURLQueryParams(urlQueryStr: string) {
   const urlSwellState = urlParams.get(SWELL_URL_PARAM_KEY)
   const urlGreatState = urlParams.get(GREAT_URL_PARAM_KEY)
 
-  if (urlPedalState && isBinaryOfCorrectLen(urlPedalState, numOfPedalStops.value)) {
+  if (urlPedalState && isBinaryOfCorrectLen(urlPedalState, numOfPedalStops)) {
     url.params.set('pedal', urlPedalState)
   }
-  if (urlSwellState && isBinaryOfCorrectLen(urlSwellState, numOfSwellStops.value)) {
+  if (urlSwellState && isBinaryOfCorrectLen(urlSwellState, numOfSwellStops)) {
     url.params.set('swell', urlSwellState)
   }
-  if (urlGreatState && isBinaryOfCorrectLen(urlGreatState, numOfGreatStops.value)) {
+  if (urlGreatState && isBinaryOfCorrectLen(urlGreatState, numOfGreatStops)) {
     url.params.set('great', urlGreatState)
   }
 }
