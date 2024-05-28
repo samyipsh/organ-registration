@@ -241,9 +241,10 @@ const loadInputQueryParam = () => {
             -
           </a>
         </div>
-        <div class="stop-details">
+        <fieldset class="stop-details">
+          <legend>Registration details</legend>
           <div>
-            <label for="sname">Registration name:</label><br>
+            <label for="sname">Name:</label><br>
             <!-- TODO: not sure why v-model= doesnt work... it should work for nested properties in Vue 3 and works for view_options below-->
             <input :value="url.registrations[curRegistration].name"
               @input="(event) => { url.registrations[curRegistration].name = (event.target as HTMLInputElement)?.value }"
@@ -256,8 +257,8 @@ const loadInputQueryParam = () => {
               type="text" id="remarks" name="regname"> -->
             <input v-model="url.registrations[curRegistration].remarks" type="text" id="remarks" name="regname">
           </div>
-          <div>
-            <label for="voptions">View options:</label><br>
+          <div class="view-options">
+            <label for="voptions">View:</label><br>
             <select v-model="url.registrations[curRegistration].view_option" type="text" id="voptions" name="voptions">
               <option value="0">DEFAULT</option> <!-- default 000-->
               <option value="7">ALL INFO</option> <!-- 111 -->
@@ -269,7 +270,8 @@ const loadInputQueryParam = () => {
               <option value="6">registration_name & difference</option> <!-- 110 -->
             </select>
           </div>
-        </div>
+        </fieldset>
+        <div style="padding-top: 1rem"></div>
         <textarea :value="instrumentsUsed" readonly rows="3"></textarea>
       </div>
     </div>
@@ -374,6 +376,7 @@ const loadInputQueryParam = () => {
   flex-direction: row;
   gap: 0.5rem;
   padding: 0.5rem 0;
+  overflow: scroll;
 }
 
 .stops-pagination a {
@@ -407,9 +410,9 @@ const loadInputQueryParam = () => {
 .stop-details {
   display: flex;
   flex-direction: row;
+  align-items: last baseline;
   gap: 1rem;
-  padding: 0.5rem 0;
-  width: 50%
+  width: 50%;
 }
 
 .remarks {
@@ -421,6 +424,7 @@ const loadInputQueryParam = () => {
   width: 100%;
 }
 
+
 textarea {
   white-space: pre-wrap;
   height: fit-content;
@@ -428,11 +432,13 @@ textarea {
   padding: 2rem 1.5rem;
 }
 
-/* Apply these styles when the viewport is 600px or less */
+/* Apply these styles when the viewport is 900px or less */
 @media (max-width: 900px) {
 
   .controls input,
-  textarea {
+  textarea,
+  .stop-details,
+  .view-options>select {
     width: 100%;
   }
 }

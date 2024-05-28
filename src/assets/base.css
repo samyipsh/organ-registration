@@ -53,7 +53,8 @@
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
+  /* modifies original context-box model where padding and border are not included in width and height */
+  box-sizing: border-box; 
   margin: 0;
   font-weight: normal;
 }
