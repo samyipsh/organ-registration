@@ -2,36 +2,72 @@
 import { ref, computed, reactive, watch } from 'vue'
 import { pedalInfo, swellInfo, greatInfo } from './data/stops'
 import menuSVG from '@/assets/menu-icon.svg'
+import { Base64Conversion } from './utils/binaryConversion'
 
-const numOfPedalStops = ref(pedalInfo.length)
-const numOfSwellStops = ref(swellInfo.length)
-const numOfGreatStops = ref(greatInfo.length)
-const PEDAL_URL_PARAM_KEY = 'pedal'
-const SWELL_URL_PARAM_KEY = 'swell'
-const GREAT_URL_PARAM_KEY = 'great'
+// TODO: remove ref; not required since this is constant and will not change from start to end of app
+// ie reactivity is not required
+const numOfPedalStops = pedalInfo.length
+const numOfSwellStops = swellInfo.length
+const numOfGreatStops = greatInfo.length
+console.log("numOfStops (pedal, swell, great): ", numOfPedalStops, numOfSwellStops, numOfGreatStops)
+
+// const PEDAL_URL_PARAM_KEY = 'pedal'
+// const SWELL_URL_PARAM_KEY = 'swell'
+// const GREAT_URL_PARAM_KEY = 'great'
+const OPTIONS_URL_PARAM_KEY = "options"
+const REGISTRATIONS_URL_PARAM_KEY = "registrations"
 // TODO: check if can just use html native select with `multiple` attribute then use v-bind
 // https://www.w3schools.com/tags/tryit.asp?filename=tryhtml_select_multiple
 
-// TODO: properly Type the params type
-const DEFAULT_PEDAL_STATE = '0'.repeat(numOfPedalStops.value)
-const DEFAULT_SWELL_STATE = '0'.repeat(numOfSwellStops.value)
-const DEFAULT_GREAT_STATE = '0'.repeat(numOfGreatStops.value)
+const DEFAULT_PEDAL_STATE = '0'.repeat(numOfPedalStops)
+const DEFAULT_SWELL_STATE = '0'.repeat(numOfSwellStops)
+const DEFAULT_GREAT_STATE = '0'.repeat(numOfGreatStops)
+const DEFAULT_STOPS_STATE_BASE2 = DEFAULT_PEDAL_STATE + DEFAULT_SWELL_STATE + DEFAULT_GREAT_STATE
+const DEFAULT_STOPS_STATE_BASE64 = Base64Conversion.encode(DEFAULT_STOPS_STATE_BASE2)
+const NEW_DEFAULT_REGISTRATION_STATE = (): RegistrationState => ({ name: '', view_option: 0, stops: DEFAULT_STOPS_STATE_BASE2, remarks: '' })
+console.log(DEFAULT_STOPS_STATE_BASE64, DEFAULT_STOPS_STATE_BASE64.length)
 
-const url = reactive({
-  base: window.location.origin + window.location.pathname,
-  params: new Map([
-    [PEDAL_URL_PARAM_KEY, DEFAULT_PEDAL_STATE],
-    [SWELL_URL_PARAM_KEY, DEFAULT_SWELL_STATE],
-    [GREAT_URL_PARAM_KEY, DEFAULT_GREAT_STATE]
-  ])
+const URL_BASE = window.location.origin + window.location.pathname
+
+type RegistrationState = {
+  // TODO: add remarks
+  // decimal of binary string (3 options: name, diff, all) 
+  // 0 is default (logical defaults will apply)
+  name: string;
+  view_option: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  stops: string; // binary string (pedal, swell, great stops concatenated) without padding
+  remarks: string;
+}
+
+const curRegistration = ref(0)
+
+// TODO: rename url to 'globalState'
+type UrlState = {
+  options: Map<string, boolean>;
+  registrations: Array<RegistrationState>;
+  // params: Map<string, string>;
+}
+const url: UrlState = reactive({
+  options: new Map<string, boolean>([
+    ["visualize_next", true]
+  ]),
+  registrations: [NEW_DEFAULT_REGISTRATION_STATE()], // array of stop objects
 })
 
+
+const registrationStr = (registration: RegistrationState): string => {
+  return `${registration.name}:${registration.view_option}:${registration.stops}:${registration.remarks}`
+}
 const urlCurrent = computed(() => {
   const newURL =
-    `${url.base}?` +
-    Array.from(url.params)
-      .map(([k, v]) => `${k}=${v}`)
-      .join('&')
+    `${URL_BASE}?` +
+    `options=` + Array(url.options.values())
+      .map((v) => v ? '1' : '0')
+      .join('') +
+    `&` +
+    `registrations=` + url.registrations
+      .map(registrationStr)
+      .join('~')
   return newURL
 })
 watch(urlCurrent, () => {
@@ -46,25 +82,35 @@ watch(urlCurrent, (newURL) => (inputText.value = newURL))
 
 parseURLQueryParams(window.location.search)
 function parseURLQueryParams(urlQueryStr: string) {
+  if (urlQueryStr === "" || urlQueryStr === "?") return
+  // console.log("urlQueryStr: ", urlQueryStr)
+  // ?options=...&registrations= r1 ~ r2 ~ r3 ...
   const binaryRegex = (n: number) => new RegExp(`^[01]{${n}}$`)
   const isBinaryOfCorrectLen = (s: string, len: number) => {
     return binaryRegex(len).test(s)
   }
 
   const urlParams = new URLSearchParams(urlQueryStr)
-  const urlPedalState = urlParams.get(PEDAL_URL_PARAM_KEY)
-  const urlSwellState = urlParams.get(SWELL_URL_PARAM_KEY)
-  const urlGreatState = urlParams.get(GREAT_URL_PARAM_KEY)
+  // const optionsParams = urlParams.get(OPTIONS_URL_PARAM_KEY)
+  const r = urlParams.get(REGISTRATIONS_URL_PARAM_KEY)
+  console.log(r)
+  const urlRegistrations = r?.split("~")
+  console.log(urlRegistrations)
 
-  if (urlPedalState && isBinaryOfCorrectLen(urlPedalState, numOfPedalStops.value)) {
-    url.params.set('pedal', urlPedalState)
+  // if (url.registrations[0]) url.registrations[0] =  
+  const newRegistrationsState: Array<RegistrationState> = []
+  for (const registration of urlRegistrations ?? []) {
+    const [name, view_option, stops, remarks] = registration.split(":")
+    console.log("name", name, "view_option", view_option, "stops", stops, "remarks", remarks)
+    const newRegistration: RegistrationState = {
+      name,
+      view_option: parseInt(view_option) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
+      stops,
+      remarks
+    }
+    newRegistrationsState.push(newRegistration)
   }
-  if (urlSwellState && isBinaryOfCorrectLen(urlSwellState, numOfSwellStops.value)) {
-    url.params.set('swell', urlSwellState)
-  }
-  if (urlGreatState && isBinaryOfCorrectLen(urlGreatState, numOfGreatStops.value)) {
-    url.params.set('great', urlGreatState)
-  }
+  url.registrations = newRegistrationsState
 }
 
 const toastText = ref(
@@ -77,39 +123,34 @@ const flipBit = (s: string, index: number) => {
   return s.slice(0, index) + (s[index] === '1' ? '0' : '1') + s.slice(index + 1)
 }
 
-const togglePedalSelected = (index: number) => {
-  const urlState = url.params.get(PEDAL_URL_PARAM_KEY)!
-  const newURLState = flipBit(urlState, index)
-  url.params.set(PEDAL_URL_PARAM_KEY, newURLState)
+const offset = (division: "pedal" | "swell" | "great") => {
+  return division === "pedal" ? 0
+    : division === "swell" ? numOfPedalStops
+      : numOfPedalStops + numOfSwellStops
+}
+const toggleDivision = (index: number, division: "pedal" | "swell" | "great") => {
+  console.assert(url.registrations.length > curRegistration.value, "registration not found")
+  const urlState = url.registrations[curRegistration.value].stops
+  const newURLState = flipBit(urlState, offset(division) + index)
+  url.registrations[curRegistration.value].stops = newURLState
 }
 
-const toggleSwellSelected = (index: number) => {
-  const urlState = url.params.get(SWELL_URL_PARAM_KEY)!
-  const newURLState = flipBit(urlState, index)
-  url.params.set(SWELL_URL_PARAM_KEY, newURLState)
-}
-
-const toggleGreatSelected = (index: number) => {
-  const urlState = url.params.get(GREAT_URL_PARAM_KEY)!
-  const newURLState = flipBit(urlState, index)
-  url.params.set(GREAT_URL_PARAM_KEY, newURLState)
-}
 const pedalInstrumentsUsed = computed(() => {
   const instumentsUsed = pedalInfo
-    .filter((stop, i) => url.params.get(PEDAL_URL_PARAM_KEY)![i] === '1')
+    .filter((_, i) => url.registrations[curRegistration.value].stops[offset("pedal") + i] === '1')
     .map((s) => `${s.stopName}${s.footagePitch ? `-${s.footagePitch.slice(0, -1)}` : ''}`)
     .join(', ')
   return `pedal: (${instumentsUsed})`
 })
 
 const swellInstrumentsUsed = computed(() => {
-  const isSoloOrganToggled = url.params.get(SWELL_URL_PARAM_KEY)![18] === '1'
+  const ALTERNATE_INSTR_IDX = 18
+  const isSoloOrganToggled = url.registrations[curRegistration.value].stops[offset("swell") + ALTERNATE_INSTR_IDX] === '1'
   const instumentsUsed = swellInfo
-    .filter((stop, i) => url.params.get(SWELL_URL_PARAM_KEY)![i] === '1')
+    .filter((_, i) => url.registrations[curRegistration.value].stops[offset("swell") + i] === '1')
     .map(
       (s) =>
-        `${isSoloOrganToggled && s.soloVoice ? s.soloVoice : s.stopName}${
-          s.footagePitch ? `-${s.footagePitch.slice(0, -1)}` : ''
+        `${isSoloOrganToggled && s.soloVoice ? s.soloVoice : s.stopName}${s.footagePitch ? `-${s.footagePitch.slice(0, -1)}` : ''
         }`
     )
     .join(', ')
@@ -117,13 +158,13 @@ const swellInstrumentsUsed = computed(() => {
 })
 
 const greatInstrumentsUsed = computed(() => {
-  const isAlternateInstrumentToggled = url.params.get(GREAT_URL_PARAM_KEY)![13] === '1'
+  const ALTERNATE_INSTR_IDX = 13
+  const isAlternateInstrumentToggled = url.registrations[curRegistration.value].stops[offset("great") + ALTERNATE_INSTR_IDX] === '1'
   const instumentsUsed = greatInfo
-    .filter((stop, i) => url.params.get(GREAT_URL_PARAM_KEY)![i] === '1')
+    .filter((_, i) => url.registrations[curRegistration.value].stops[offset("great") + i] === '1')
     .map(
       (s) =>
-        `${isAlternateInstrumentToggled && s.soloVoice ? s.soloVoice : s.stopName}${
-          s.footagePitch ? `-${s.footagePitch.slice(0, -1)}` : ''
+        `${isAlternateInstrumentToggled && s.soloVoice ? s.soloVoice : s.stopName}${s.footagePitch ? `-${s.footagePitch.slice(0, -1)}` : ''
         }`
     )
     .join(', ')
@@ -135,12 +176,33 @@ const instrumentsUsed = computed(() => {
 })
 
 const resetStops = () => {
-  url.params.set(PEDAL_URL_PARAM_KEY, DEFAULT_PEDAL_STATE)
-  url.params.set(SWELL_URL_PARAM_KEY, DEFAULT_SWELL_STATE)
-  url.params.set(GREAT_URL_PARAM_KEY, DEFAULT_GREAT_STATE)
+  url.registrations[curRegistration.value].stops = DEFAULT_STOPS_STATE_BASE2
 }
 const copyRegistration = () => {
   window.navigator.clipboard.writeText(instrumentsUsed.value)
+}
+
+const addEmptyRegistrationAfterCurRegistration = () => {
+  const newRegistration = NEW_DEFAULT_REGISTRATION_STATE()
+  const oneBased_CurRegistrationIndex = curRegistration.value + 1
+  if (window.confirm(`Add registration at slot [${oneBased_CurRegistrationIndex + 1}]?`)) {
+    url.registrations.splice(curRegistration.value + 1, 0, newRegistration)
+  }
+  // url.registrations.push({ name: '', view_option: 0, stops: DEFAULT_STOPS_STATE_BASE2, remarks: '' })
+}
+const deleteCurRegistrationWithConfirmation = () => {
+  if (url.registrations.length === 1) {
+    window.alert("Cannot delete the only registration")
+    return
+  }
+
+  const oneBased_CurRegistrationIndex = curRegistration.value + 1
+  if (window.confirm(`Remove registration at slot [${oneBased_CurRegistrationIndex}]?`)) {
+    url.registrations.splice(curRegistration.value, 1);
+    if (curRegistration.value >= url.registrations.length) {
+      curRegistration.value = url.registrations.length - 1;
+    }
+  }
 }
 
 // TODO: fix so that when wrong input is parsed it explains which param is wrong
@@ -167,6 +229,49 @@ const loadInputQueryParam = () => {
           <button @click="copyURL">Copy URL</button>
           <button @click="copyRegistration">Copy Registration</button>
         </div>
+        <div class="stops-pagination">
+          <a v-for="r_idx in (url.registrations.length)" :key="r_idx" @click="() => curRegistration = r_idx - 1"
+            :class="{ active: curRegistration === r_idx - 1, empty: url.registrations[r_idx - 1].stops === DEFAULT_STOPS_STATE_BASE2 }">
+            {{ r_idx }}
+          </a>
+          <a class="add-registration" title="Add registration" @click="addEmptyRegistrationAfterCurRegistration">
+            +
+          </a>
+          <a class="remove-registration" title="Remove registration" @click="deleteCurRegistrationWithConfirmation">
+            -
+          </a>
+        </div>
+        <fieldset class="stop-details">
+          <legend>Registration details</legend>
+          <div>
+            <label for="sname">Name:</label><br>
+            <!-- TODO: not sure why v-model= doesnt work... it should work for nested properties in Vue 3 and works for view_options below-->
+            <input :value="url.registrations[curRegistration].name"
+              @input="(event) => { url.registrations[curRegistration].name = (event.target as HTMLInputElement)?.value }"
+              type="text" id="regname" name="regname">
+          </div>
+          <div class="remarks">
+            <label for="remarks">Remarks:</label><br>
+            <!-- <input :value="url.registrations[curRegistration].remarks"
+              @input="(event) => { url.registrations[curRegistration].remarks = (event.target as HTMLInputElement)?.value }"
+              type="text" id="remarks" name="regname"> -->
+            <input v-model="url.registrations[curRegistration].remarks" type="text" id="remarks" name="regname">
+          </div>
+          <div class="view-options">
+            <label for="voptions">View:</label><br>
+            <select v-model="url.registrations[curRegistration].view_option" type="text" id="voptions" name="voptions">
+              <option value="0">DEFAULT</option> <!-- default 000-->
+              <option value="7">ALL INFO</option> <!-- 111 -->
+              <option value="1">stops_details only</option> <!-- 001 -->
+              <option value="2">different_stops only </option> <!-- 010 -->
+              <option value="3">different_stops & stop_details</option> <!-- 011 -->
+              <option value="4">registration_name only</option> <!-- 100 -->
+              <option value="5">registration_name & stop_details</option> <!-- 101 -->
+              <option value="6">registration_name & difference</option> <!-- 110 -->
+            </select>
+          </div>
+        </fieldset>
+        <div style="padding-top: 1rem"></div>
         <textarea :value="instrumentsUsed" readonly rows="3"></textarea>
       </div>
     </div>
@@ -177,13 +282,9 @@ const loadInputQueryParam = () => {
           pedal <span>({{ numOfPedalStops }})</span>
         </h2>
         <div class="card-row">
-          <div
-            class="card"
-            v-for="(stop, index) in pedalInfo"
-            :key="stop.id"
-            :class="{ 'card-selected': url.params.get(PEDAL_URL_PARAM_KEY)?.[index] === '1' }"
-            @click="() => togglePedalSelected(index)"
-          >
+          <div class="card" v-for="(stop, index) in pedalInfo" :key="stop.id"
+            :class="{ 'card-selected': url.registrations[curRegistration].stops[offset('pedal') + index] === '1' }"
+            @click="() => toggleDivision(index, 'pedal')">
             <div class="card-body">
               <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
               <h5 class="card-title">{{ stop.stopName }}</h5>
@@ -197,13 +298,9 @@ const loadInputQueryParam = () => {
           swell <span>({{ numOfSwellStops }})</span>
         </h2>
         <div class="card-row">
-          <div
-            class="card"
-            v-for="(stop, index) in swellInfo"
-            :key="stop.id"
-            :class="{ 'card-selected': url.params.get(SWELL_URL_PARAM_KEY)?.[index] === '1' }"
-            @click="() => toggleSwellSelected(index)"
-          >
+          <div class="card" v-for="(stop, index) in swellInfo" :key="stop.id"
+            :class="{ 'card-selected': url.registrations[curRegistration].stops[offset('swell') + index] === '1' }"
+            @click="() => toggleDivision(index, 'swell')">
             <div class="card-body">
               <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
               <h5 class="card-title">{{ stop.stopName }}</h5>
@@ -217,13 +314,9 @@ const loadInputQueryParam = () => {
           great <span>({{ numOfGreatStops }})</span>
         </h2>
         <div class="card-row">
-          <div
-            class="card"
-            v-for="(stop, index) in greatInfo"
-            :key="stop.id"
-            :class="{ 'card-selected': url.params.get(GREAT_URL_PARAM_KEY)?.[index] === '1' }"
-            @click="() => toggleGreatSelected(index)"
-          >
+          <div class="card" v-for="(stop, index) in greatInfo" :key="stop.id"
+            :class="{ 'card-selected': url.registrations[curRegistration].stops[offset('great') + index] === '1' }"
+            @click="() => toggleDivision(index, 'great')">
             <div class="card-body">
               <p class="card-top" v-if="stop.soloVoice">{{ stop.soloVoice }}</p>
               <h5 class="card-title">{{ stop.stopName }}</h5>
@@ -262,7 +355,11 @@ const loadInputQueryParam = () => {
   margin-bottom: 0.5rem;
   cursor: pointer;
 }
+
 .controls {
+  display: flex;
+  flex-direction: column;
+  align-items: left;
   background-color: #fff;
   border-radius: 1rem;
   color: #111;
@@ -274,6 +371,60 @@ const loadInputQueryParam = () => {
   width: 50%;
 }
 
+.stops-pagination {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  overflow: scroll;
+}
+
+.stops-pagination a {
+  color: black;
+  padding: 8px 1rem;
+  border: 1px solid #23232382;
+  border-radius: 1rem;
+}
+
+.stops-pagination a.add-registration,
+.stops-pagination a.remove-registration {
+  font-weight: 700;
+  border-color: #ddd;
+}
+
+/* TODO: understand linear gradient: https://kittygiraudel.com/2013/02/04/dig-deep-into-css-gradients/#a-few-things-about-linear-gradients */
+.stops-pagination a.empty {
+  background-image: linear-gradient(45deg, #f3f3f3 25%, transparent 25%, transparent 75%, #f3f3f3 75%, #f3f3f3), linear-gradient(45deg, #f3f3f3 25%, transparent 25%, transparent 75%, #f3f3f3 75%, #f3f3f3);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+.stops-pagination a.active {
+  background-color: #0e4ec653;
+}
+
+.stops-pagination a:hover {
+  background-color: #ddd;
+}
+
+.stop-details {
+  display: flex;
+  flex-direction: row;
+  align-items: last baseline;
+  gap: 1rem;
+  width: 50%;
+}
+
+.remarks {
+  display: block;
+  flex-grow: 1;
+}
+
+.stop-details input {
+  width: 100%;
+}
+
+
 textarea {
   white-space: pre-wrap;
   height: fit-content;
@@ -281,10 +432,13 @@ textarea {
   padding: 2rem 1.5rem;
 }
 
-/* Apply these styles when the viewport is 600px or less */
+/* Apply these styles when the viewport is 900px or less */
 @media (max-width: 900px) {
+
   .controls input,
-  textarea {
+  textarea,
+  .stop-details,
+  .view-options>select {
     width: 100%;
   }
 }
@@ -303,6 +457,7 @@ textarea {
   color: #111111;
   padding: 3rem 0rem 3rem 1rem;
 }
+
 .division h2 {
   font-size: 1.5rem;
   padding: 0 0.5rem;
@@ -319,6 +474,7 @@ textarea {
   overflow-x: auto;
   padding: 1rem 0;
 }
+
 .card {
   width: 6rem;
   flex-shrink: 0;
@@ -344,7 +500,7 @@ textarea {
   font-weight: 700;
   padding: 0 0.5rem;
   width: 100%;
-  text-overflow: ellipsis; 
+  text-overflow: ellipsis;
 }
 
 .card-top {
