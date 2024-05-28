@@ -1,7 +1,11 @@
 # organ-registration
 
+Store organ registrations in the URL for easy dissemnination and storage. Visualize organ stops.
+
 production site: https://samyipsh.github.io/organ-registration/
 - example query param: `/?pedal=0011010000000&swell=0000000000001000000&great=01001000000000`
+
+example of storage of 4 registrations: https://samyipsh.github.io/organ-registration/?options=1&registrations=M4-1:0:0001000000010011000100000000000001001000000000:Clarinet%20solo~M4-2:0:0001000000010011000001000000000001001000000000:Cor%20Anglais%20solo~:0:0000000000000000000000000000000000000000000000:~M4-4:0:1101000001110011000010111100000111001111000100:Stanza%204%20goes%20boom%20boom
 
 
 ## Recommended IDE Setup
