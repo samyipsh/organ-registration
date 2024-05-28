@@ -191,6 +191,11 @@ const addEmptyRegistrationAfterCurRegistration = () => {
   // url.registrations.push({ name: '', view_option: 0, stops: DEFAULT_STOPS_STATE_BASE2, remarks: '' })
 }
 const deleteCurRegistrationWithConfirmation = () => {
+  if (url.registrations.length === 1) {
+    window.alert("Cannot delete the only registration")
+    return
+  }
+
   const oneBased_CurRegistrationIndex = curRegistration.value + 1
   if (window.confirm(`Remove registration at slot [${oneBased_CurRegistrationIndex}]?`)) {
     url.registrations.splice(curRegistration.value, 1);
