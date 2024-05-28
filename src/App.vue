@@ -24,6 +24,7 @@ const DEFAULT_SWELL_STATE = '0'.repeat(numOfSwellStops)
 const DEFAULT_GREAT_STATE = '0'.repeat(numOfGreatStops)
 const DEFAULT_STOPS_STATE_BASE2 = DEFAULT_PEDAL_STATE + DEFAULT_SWELL_STATE + DEFAULT_GREAT_STATE
 const DEFAULT_STOPS_STATE_BASE64 = Base64Conversion.encode(DEFAULT_STOPS_STATE_BASE2)
+const NEW_DEFAULT_REGISTRATION_STATE = (): RegistrationState => ({ name: '', view_option: 0, stops: DEFAULT_STOPS_STATE_BASE2, remarks: '' })
 console.log(DEFAULT_STOPS_STATE_BASE64, DEFAULT_STOPS_STATE_BASE64.length)
 
 const URL_BASE = window.location.origin + window.location.pathname
@@ -50,7 +51,7 @@ const url: UrlState = reactive({
   options: new Map<string, boolean>([
     ["visualize_next", true]
   ]),
-  registrations: [{ name: "", view_option: 0, stops: DEFAULT_STOPS_STATE_BASE2, remarks: "" }], // array of stop objects
+  registrations: [NEW_DEFAULT_REGISTRATION_STATE()], // array of stop objects
 })
 
 
@@ -181,6 +182,24 @@ const copyRegistration = () => {
   window.navigator.clipboard.writeText(instrumentsUsed.value)
 }
 
+const addEmptyRegistrationAfterCurRegistration = () => {
+  const newRegistration = NEW_DEFAULT_REGISTRATION_STATE()
+  const oneBased_CurRegistrationIndex = curRegistration.value + 1
+  if (window.confirm(`Add registration at slot [${oneBased_CurRegistrationIndex + 1}]?`)) {
+    url.registrations.splice(curRegistration.value + 1, 0, newRegistration)
+  }
+  // url.registrations.push({ name: '', view_option: 0, stops: DEFAULT_STOPS_STATE_BASE2, remarks: '' })
+}
+const deleteCurRegistrationWithConfirmation = () => {
+  const oneBased_CurRegistrationIndex = curRegistration.value + 1
+  if (window.confirm(`Remove registration at slot [${oneBased_CurRegistrationIndex}]?`)) {
+    url.registrations.splice(curRegistration.value, 1);
+    if (curRegistration.value >= url.registrations.length) {
+      curRegistration.value = url.registrations.length - 1;
+    }
+  }
+}
+
 // TODO: fix so that when wrong input is parsed it explains which param is wrong
 const loadInputQueryParam = () => {
   const inputQueryParam = inputText.value.split('?')[1]
@@ -209,6 +228,12 @@ const loadInputQueryParam = () => {
           <a v-for="r_idx in (url.registrations.length)" :key="r_idx" @click="() => curRegistration = r_idx - 1"
             :class="{ active: curRegistration === r_idx - 1, empty: url.registrations[r_idx - 1].stops === DEFAULT_STOPS_STATE_BASE2 }">
             {{ r_idx }}
+          </a>
+          <a class="add-registration" title="Add registration" @click="addEmptyRegistrationAfterCurRegistration">
+            +
+          </a>
+          <a class="remove-registration" title="Remove registration" @click="deleteCurRegistrationWithConfirmation">
+            -
           </a>
         </div>
         <div class="stop-details">
@@ -349,13 +374,25 @@ const loadInputQueryParam = () => {
 .stops-pagination a {
   color: black;
   padding: 8px 1rem;
-  border: 1px solid #ddd;
+  border: 1px solid #23232382;
   border-radius: 1rem;
+}
+
+.stops-pagination a.add-registration,
+.stops-pagination a.remove-registration {
+  font-weight: 700;
+  border-color: #ddd;
+}
+
+/* TODO: understand linear gradient: https://kittygiraudel.com/2013/02/04/dig-deep-into-css-gradients/#a-few-things-about-linear-gradients */
+.stops-pagination a.empty {
+  background-image: linear-gradient(45deg, #f3f3f3 25%, transparent 25%, transparent 75%, #f3f3f3 75%, #f3f3f3), linear-gradient(45deg, #f3f3f3 25%, transparent 25%, transparent 75%, #f3f3f3 75%, #f3f3f3);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
 }
 
 .stops-pagination a.active {
   background-color: #0e4ec653;
-  border: 1px solid #dddddd72;
 }
 
 .stops-pagination a:hover {
