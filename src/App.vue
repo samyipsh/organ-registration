@@ -25,6 +25,7 @@ const DEFAULT_GREAT_STATE = '0'.repeat(numOfGreatStops)
 const DEFAULT_STOPS_STATE_BASE2 = DEFAULT_PEDAL_STATE + DEFAULT_SWELL_STATE + DEFAULT_GREAT_STATE
 const DEFAULT_STOPS_STATE_BASE64 = Base64Conversion.encode(DEFAULT_STOPS_STATE_BASE2)
 const NEW_DEFAULT_REGISTRATION_STATE = (): RegistrationState => ({ name: '', view_option: 0, stops: DEFAULT_STOPS_STATE_BASE2, remarks: '' })
+const NEW_REGISTRATION_STATE_WITH_STOPS = (stops: string): RegistrationState => ({ name: '', view_option: 0, stops: stops, remarks: '' })
 console.log(DEFAULT_STOPS_STATE_BASE64, DEFAULT_STOPS_STATE_BASE64.length)
 
 const URL_BASE = window.location.origin + window.location.pathname
@@ -186,9 +187,14 @@ const addEmptyRegistrationAfterCurRegistration = () => {
   const newRegistration = NEW_DEFAULT_REGISTRATION_STATE()
   const oneBased_CurRegistrationIndex = curRegistration.value + 1
   if (window.confirm(`Add registration at slot [${oneBased_CurRegistrationIndex + 1}]?`)) {
-    url.registrations.splice(curRegistration.value + 1, 0, newRegistration)
+    const prvRegistrationStops = url.registrations[curRegistration.value].stops
+    if (prvRegistrationStops !== DEFAULT_STOPS_STATE_BASE2 && window.confirm(`Copy stops of previous registration (from slot [${oneBased_CurRegistrationIndex}])?\nPress cancel to add empty registration`)) {
+      url.registrations.splice(curRegistration.value + 1, 0, NEW_REGISTRATION_STATE_WITH_STOPS(prvRegistrationStops))
+    } else {
+      url.registrations.splice(curRegistration.value + 1, 0, newRegistration)
+    }
+    curRegistration.value = curRegistration.value + 1
   }
-  // url.registrations.push({ name: '', view_option: 0, stops: DEFAULT_STOPS_STATE_BASE2, remarks: '' })
 }
 const deleteCurRegistrationWithConfirmation = () => {
   if (url.registrations.length === 1) {
